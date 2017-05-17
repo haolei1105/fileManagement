@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>文件管理模块</title>
+    <link charset="UTF-8" type="text/css" rel="stylesheet" href="./css/reset.min.css"/>
+    <!--<link charset="UTF-8" type="text/css" rel="stylesheet/less" href="./css/index.less"/>-->
+    <link charset="UTF-8" type="text/css" rel="stylesheet" href="./css/public.css"/>
+</head>
+<body>
+<div id="box">
+    <div id="head">
+        <div id="head_shang"></div>
+        <div id="head_xia">
+            <ul>
+                <li class="top1"><input type="text"/></li>
+                <li class="top2"><input type="text" value="文件搜索" id="search_input"/><img src="./images/search.gif"
+                                                                                         alt=""/></li>
+            </ul>
+        </div>
+    </div>
+    <div id="food">
+        <div id="tree" class="food_child">
+            <div class="add_menu">
+                <!--添加部门按钮-->
+                <p id="add_menu">+&nbsp添加部门</p>
+            </div>
+
+            <!--左侧树形-->
+            <div class="subNavBox">
+                <div class="subNav currentDd currentDt " id="cw">财务部</div>
+                <ul class="navContent " style="display:block" id="cw_ul">
+                    <li><a href="#">文件夹1</a></li>
+                    <li><a href="#">文件夹2</a></li>
+                </ul>
+                <div class="subNav " id="sc">市场部</div>
+                <ul class="navContent ">
+                    <li><a href="#">文件夹3</a></li>
+                    <li><a href="#">文件夹4</a></li>
+                </ul>
+                <div class="subNav" id="js">技术部</div>
+                <ul class="navContent">
+                    <li><a href="#">文件夹5</a></li>
+                </ul>
+                <div class="subNav" id="cg">采购部</div>
+                <ul class="navContent">
+                    <li><a href="#">文件夹6</a></li>
+                    <li><a href="#">文件夹7</a></li>
+                    <li><a href="#">文件夹8</a></li>
+                </ul>
+            </div>
+
+            <!--树形添加部门-->
+            <div id="add_input">
+                <ul>
+                    <li>
+                        <input type="text" value="输入名称" id="bm_name"/>
+                    </li>
+                </ul>
+            </div>
+            <!--树形右击菜单-->
+            <div class="contextMenu" id="myMenu1">
+                <ul>
+                    <li id="delete"><img src="images/cross.png"/>删除部门</li>
+                    <li id="up"><img src="images/up.png"/>上移</li>
+                    <li id="down"><img src="images/down.png"/>下移</li>
+                    <li id="rename"><img src="images/rename.png"/>重命名</li>
+                    <li id="add_file"><img src="images/New_File.png"/>新建文件夹</li>
+                </ul>
+            </div>
+        </div>
+        <!--右侧文件部门-->
+        <div id="file" class="food_child">
+            <!--文件夹窗口-->
+            <div id="folder_win">
+                <div class="top3">
+                    <ul class="top3_ul">
+                        <li>
+                            <a href="javascript:void(0)" id="new_folder">
+                                <img src="./images/folder_new.png" alt=""/>
+                                分享
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)">
+                                <img src="./images/delete_folde.png" alt=""/>
+                                下载
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)">
+                                <img src="./images/delete_folde.png" alt=""/>
+                                删除
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)">
+                                <img src="./images/delete_folde.png" alt=""/>
+                                重命名
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div id="top3_next">
+                    <ul class="top3_next_ul">
+                        <li class="db_folder">
+                            <img src="./images/file.png" alt=""/>
+                            <p>文件夹1</p>
+                            <input name="Fruit" type="checkbox" class="folder_xz"/>
+                        </li>
+                        <li class="db_folder">
+                            <img src="./images/file.png" alt=""/>
+                            <p>文件夹2</p>
+                            <input name="Fruit" type="checkbox" class="folder_xz"/>
+                        </li>
+                        <li class="db_folder">
+                            <img src="./images/file.png" alt="" />
+                            <p>文件夹3</p>
+                            <input name="Fruit" type="checkbox" class="folder_xz"/>
+                        </li>
+                        <li class="db_folder">
+                            <img src="./images/file.png" alt=""/>
+                            <p>文件夹4</p>
+                            <input name="Fruit" type="checkbox" class="folder_xz"/>
+                        </li>
+                        <li class="db_folder">
+                            <img src="./images/file.png" alt=""/>
+                            <p>文件夹5</p>
+                            <input name="Fruit" type="checkbox" class="folder_xz"/>
+                        </li>
+                        <li class="db_folder">
+                            <img src="./images/file.png" alt=""/>
+                            <p>文件夹6</p>
+                            <input name="Fruit" type="checkbox" class="folder_xz"/>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!--文件窗口-->
+            <div id="file_win">
+                <!--表头-->
+                <div class="top2">
+                    <ul class="top2_ul">
+                        <li>
+                            <a href="javascript:void(0)" id="back">
+                                <img src="./images/fanhui.png" alt=""/>
+                                返回
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)" id="add_files">
+                                <img src="./images/file_upload.png" alt=""/>
+                                上传
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)">
+                                <img src="./images/delete_folde.png" alt=""/>
+                                下载
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)" id="new_file">
+                                <img src="./images/New_File.png" alt=""/>
+                                新建文件
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)">
+                                <img src="./images/folder_new.png" alt=""/>
+                                分享
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)">
+                                <img src="./images/delete_folde.png" alt=""/>
+                                删除
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)">
+                                <img src="./images/delete_folde.png" alt=""/>
+                                重命名
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <!--内容部门-->
+                <div id="top2_next">
+                    <ul class="top2_next_ul">
+                        <li class="db_file">
+                            <img src="./images/dbfile.png" alt=""/>
+                            <p>文件1</p>
+                        </li>
+                        <li class="db_file">
+                            <img src="./images/dbfile.png" alt=""/>
+                            <p>文件2</p>
+                        </li>
+                        <li class="db_file">
+                            <img src="./images/dbfile.png" alt=""/>
+                            <p>文件3</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="contextMenu" id="myMenu2">
+            <ul>
+                <li id="delete_folder"><img src="images/folder_delet2.png"/>删除文件夹</li>
+            </ul>
+        </div>
+        <div class="contextMenu" id="myMenu3">
+            <ul>
+                <li id="delete_filex"><img src="images/folder_delet2.png"/>删除文件夹</li>
+            </ul>
+        </div>
+    </div>
+</div>
+</body>
+<script charset="UTF-8" type="text/javascript" src="js/less-2.5.3.min.js"></script>
+<script charset="UTF-8" type="text/javascript" src="./js/jquery1.7.2.js"></script>
+<script charset="utf-8" type="text/javascript" src="./js/Tdrag.min.js"></script>
+<script charset="UTF-8" type="text/javascript" src="./js/ajax.js"></script>
+<script charset="UTF-8" type="text/javascript" src="./js/jquery.contextmenu.r2.js"></script>
+<script src="./js/event1.js"></script>
+<script src="./js/drag_oop2.js"></script>
+<script src="./js/tween.js"></script>
+<script charset="UTF-8" type="text/javascript" src="./js/index.js"></script>
+</html>

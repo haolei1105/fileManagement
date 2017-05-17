@@ -1,0 +1,419 @@
+html,
+body {
+  width: 100%;
+}
+#box {
+  width: 100%;
+  height: 640px;
+  margin: 0 auto;
+  background:#fdfefe;
+}
+#box #head {
+  background: #fff;
+  width: 1006px;
+  height: 72px;
+  margin: 0 auto;
+}
+
+#box #head #head_xia {
+  width: 1006px;
+  height: 70px;
+  border: 1px solid #acb2bb;
+  background: #138CDD;
+}
+#box #head #head_xia ul {
+  width: 1000px;
+  margin: 15px;
+}
+#box #head #head_xia ul li{
+    float: left;
+    text-align: center;
+}
+
+#box #head #head_xia ul .top2 {
+  width: 600px;
+  height: 38px;
+  margin-left: 200px;
+}
+#box #head #head_xia ul .top2 input {
+  display: inline-block;
+  height: 30px;
+  width:350px;
+  border: 1px solid #dedeec;
+  padding-left: 10px;
+  margin-top: 4px;
+  color: #dedeec;
+  border-radius: 5px;
+}
+
+#box #head #head_xia ul .top2 img {
+	position: relative;
+    top: -2%;
+}
+#box #food {
+  background: #fff;
+  width: 1008px;
+  height: 502px;
+  margin: 8px auto;
+  /*��������*/
+  /*�Ҳ��ļ�����*/
+}
+#box #food .food_child {
+  display: inline-block;
+}
+#box #food #tree {
+  width: 200px;
+  height: 500px;
+  border: 1px solid #168bbf;
+  position: absolute;
+  overflow: hidden;
+  overflow-y: scroll;
+  /*���Ӳ��Ű�ť*/
+  /*������ʽ*/
+  /*���Ӳ��ŵײ���ʽ*/
+}
+#box #food #tree .add_menu {
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: ����;
+  padding-top: 12px;
+  padding-left: 6px;
+  color: #000000;
+  display: inline-block;
+}
+#box #food #tree .add_menu p {
+  background: #ffffff;
+}
+#box #food #tree .add_menu p:hover {
+  background: #ccebf8;
+}
+#box #food #tree .subNavBox {
+  width: 150px;
+  border: solid 1px #e5e3da;
+  margin: 15px auto;
+}
+#box #food #tree .subNav {
+  border-bottom: solid 1px #e5e3da;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  color: #555;
+  line-height: 28px;
+  padding-left: 10px;
+  background: url(../images/jiantou1.jpg) no-repeat;
+  background-position: 95% 50%;
+}
+#box #food #tree .subNav input {
+  display: none;
+  width: 100px;
+}
+#box #food #tree .subNav:hover {
+  color: #277fc2;
+}
+#box #food #tree .currentDd {
+  color: #277fc2;
+}
+#box #food #tree .currentDt {
+  background-image: url(../images/jiantou.jpg);
+}
+#box #food #tree .navContent {
+  display: none;
+  border-bottom: solid 1px #e5e3da;
+}	
+#box #food #tree .navContent li{
+    padding: 0 5px 0 5px;
+}
+#box #food #tree .navContent li a {
+	overflow: hidden;
+  display: block;
+  margin-left: 10px;
+  width: 120px;
+  height: 28px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 28px;
+  color: #333333;
+}
+#box #food #tree .navContent li a:hover {
+  color: #fff;
+  background-color: #277fc2;
+}
+#box #food #tree .newName {
+  background: #acb2bb;
+  width: 80px;
+  height: 30px;
+  margin: 0 33px auto;
+  text-align: center;
+  font-family: "΢���ź�", "Microsoft Yahei", "STXihei", arial, sans-serif;
+  color: #fff;
+  border-radius: 5px;
+}
+#box #food #tree #add_input {
+  margin-left: 60px;
+  display: none;
+}
+#box #food #tree #add_input input {
+  width: 80px;
+  padding: 3px;
+  border: 1px solid #acb2bb;
+  text-align: center;
+  font-weight: 100;
+  background: #168bbf;
+  color: #ffffff;
+  disabled: true;
+}
+#box #food #file {
+  width: 787px;
+  height: 500px;
+  border: 1px solid #168bbf;
+  margin-left: 220px;
+  overflow: hidden;
+  overflow-y: scroll;
+  /*�ļ�����Ĭ�ϴ���*/
+  /*�ļ��д��ڱ�ͷ*/
+  /*�ļ��д���*/
+  /*�����ļ�����*/
+}
+#box #food #file .defaultWindow {
+  margin: 0 auto;
+  width: 787px;
+  height: 500px;
+  text-align: center;
+  display: block;
+  z-index: 10;
+  background: #fafafa;
+  font-size: 18px;
+}
+
+#box #food #file #folder_win {
+  display: none;
+  margin: 0 auto;
+}
+#box #food #file #folder_win .top3 {
+  background: #ccebf8;
+}
+#box #food #file #folder_win .top3 .top3_ul {
+  margin: 0 auto;
+  width: 100%;
+}
+#box #food #file #folder_win .top3 .top3_ul li {
+	width:100px;
+  display: inline-block;
+}
+#box #food #file #folder_win .top3 .top3_ul li a {
+  display: block;
+  margin: 0 10px;
+  padding: 0 5px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  font-size: 14px;
+  color: #006699;
+  font-weight: normal;
+  border-radius: 5px;
+  -webkit-box-shadow: 50% rgba(0, 0, 0, 0.5);
+  -moz-box-shadow: 50% rgba(0, 0, 0, 0.5);
+  -ms-box-shadow: 50% rgba(0, 0, 0, 0.5);
+  -o-box-shadow: 50% rgba(0, 0, 0, 0.5);
+  box-shadow: 50% rgba(0, 0, 0, 0.5);
+}
+#box #food #file #folder_win .top3 .top3_ul li a:hover {
+  background: #d9d9d9;
+}
+#box #food #file #folder_win .top3 .top3_ul li a img {
+  position: relative;
+  top: -2%;
+}
+#box #food #file #folder_win #top3_next {
+  word-break:break-all;
+  margin: 0 auto;
+  width: 100%;
+}
+#box #food #file #folder_win #top3_next .top3_next_ul .db_folder {
+  	width: 80px;
+    float: left;
+    text-align: center;
+    margin: 10px 50px;
+    padding: 5px;
+    border: 1px solid #fdfefe;
+}
+ #box #food #file #folder_win #top3_next .top3_next_ul .db_folder:hover {
+  background: #ccebf8;
+} 
+#box #food #file #folder_win #top3_next .top3_next_ul .db_folder:hover .folder_xz {
+  display: block;
+  margin: auto;
+}
+#box #food #file #folder_win #top3_next .top3_next_ul .db_folder img {
+  width: 100%;
+}
+#box #food #file #folder_win #top3_next .top3_next_ul .db_folder p {
+    font-size: 12px;
+    width: 100%;
+}
+#box #food #file #folder_win #top3_next .top3_next_ul .db_folder .folder_xz {
+  display: none;
+  margin: auto;
+}
+#box #food #file #file_win {
+  display: none;
+  margin: 0 auto;
+  /*�ļ����ڱ�ͷ*/
+  /*�²��ļ�����*/
+}
+#box #food #file #file_win .top2 {
+background: #ccebf8;
+}
+#box #food #file #file_win .top2 .top2_ul {
+  margin: 0 auto;
+  width: 100%;
+}
+#box #food #file #file_win .top2 .top2_ul li {
+	width:100px;
+  display: inline-block;
+}
+#box #food #file #file_win .top2 .top2_ul li a {
+  display: block;
+  margin: 0 10px;
+  padding: 0 5px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  font-size: 14px;
+  color: #006699;
+  font-weight: normal;
+  border-radius: 5px;
+  -webkit-box-shadow: 50% rgba(0, 0, 0, 0.5);
+  -moz-box-shadow: 50% rgba(0, 0, 0, 0.5);
+  -ms-box-shadow: 50% rgba(0, 0, 0, 0.5);
+  -o-box-shadow: 50% rgba(0, 0, 0, 0.5);
+  box-shadow: 50% rgba(0, 0, 0, 0.5);
+}
+#box #food #file #file_win .top2 .top2_ul li a:hover {
+  background: #d9d9d9;
+}
+#box #food #file #file_win .top2 .top2_ul li a img {
+  position: relative;
+  top: -2%;
+}
+#box #food #file #file_win #top2_next {
+  word-break:break-all;
+  margin: 0 auto;
+  width: 100%;
+}
+#box #food #file #file_win #top2_next .top2_next_ul li {
+  width: 80px;
+  float: left;
+  text-align: center;
+  margin: 20px 20px;
+}
+#box #food #file #file_win #top2_next .top2_next_ul li:hover {
+	background: #d9d9d9;
+}
+#box #food #file #file_win #top2_next .top2_next_ul li img {
+  width: 50%;
+}
+#box #food #file #file_win #top2_next .top2_next_ul li p {
+  width: 100%;
+  font-size: 12px;
+}
+.oInput{
+        width: 40px;
+        padding: 3px;
+        border: 0.5px solid #acb2bb;
+        text-align: center;
+        font-weight: 100;
+        background: #168bbf;
+        color: #ffffff;
+        disabled: true;
+}
+    
+#box #food #file #scWin {
+  display: none;
+  margin: 0 auto;
+}
+#box #food #file #scWin .top4 {
+background: #ccebf8;
+}
+#box #food #file #scWin .top4 .top4_ul {
+  margin: 0 auto;
+  width: 100%;
+}
+#box #food #file #scWin .top4 .top4_ul li {
+	width:100px;
+  display: inline-block;
+}
+#box #food #file #scWin .top4 .top4_ul li a {
+  display: block;
+  margin: 0 10px;
+  padding: 0 5px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  font-size: 14px;
+  color: #006699;
+  font-weight: normal;
+  border-radius: 5px;
+  -webkit-box-shadow: 50% rgba(0, 0, 0, 0.5);
+  -moz-box-shadow: 50% rgba(0, 0, 0, 0.5);
+  -ms-box-shadow: 50% rgba(0, 0, 0, 0.5);
+  -o-box-shadow: 50% rgba(0, 0, 0, 0.5);
+  box-shadow: 50% rgba(0, 0, 0, 0.5);
+}
+#box #food #file #scWin .top4 .top4_ul li a:hover {
+  background: #d9d9d9;
+}
+#box #food #file #scWin .top4 .top4_ul li a img {
+  position: relative;
+  top: -2%;
+}
+
+#formWindow{
+  margin: 100px auto;
+  width: 300px;
+}   
+
+#box #food #file #sharewin {
+  display: none;
+  margin: 0 auto;
+}
+#box #food #file #sharewin .top5 {
+background: #ccebf8;
+}
+#box #food #file #sharewin .top5 .top5_ul {
+  margin: 0 auto;
+  width: 100%;
+}
+#box #food #file #sharewin .top5 .top5_ul li {
+	width:100px;
+  display: inline-block;
+}
+#box #food #file #sharewin .top5 .top5_ul li a {
+  display: block;
+  margin: 0 10px;
+  padding: 0 5px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  font-size: 14px;
+  color: #006699;
+  font-weight: normal;
+  border-radius: 5px;
+  -webkit-box-shadow: 50% rgba(0, 0, 0, 0.5);
+  -moz-box-shadow: 50% rgba(0, 0, 0, 0.5);
+  -ms-box-shadow: 50% rgba(0, 0, 0, 0.5);
+  -o-box-shadow: 50% rgba(0, 0, 0, 0.5);
+  box-shadow: 50% rgba(0, 0, 0, 0.5);
+}
+#box #food #file #sharewin .top5 .top5_ul li a:hover {
+  background: #d9d9d9;
+}
+#box #food #file #sharewin .top5 .top5_ul li a img {
+  position: relative;
+  top: -2%;
+}
+#box #food #file #sharewin #shareWindow {
+  margin: 100px auto;
+  width: 300px;
+}
