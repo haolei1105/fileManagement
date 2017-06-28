@@ -1,215 +1,321 @@
 <%@ page contentType="text/html;charset=UTF-8"%>
-<%@ page
-	import="org.apache.shiro.web.filter.authc.FormAuthenticationFilter"%>
+<%@ page import="org.apache.shiro.web.filter.authc.FormAuthenticationFilter"%>
 <%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+
 <html>
 <head>
+<meta name="decorator" content="default" />
+<%@include file="/WEB-INF/views/include/treeview.jsp"%>
     <meta name="decorator" content="blank" />
+    <meta http-equiv="pragma" content="no-cache"/>
+    <meta http-equiv="cache-control" content="no-cache"/>
     <title>文件管理模块</title>
     <link type="text/css" rel="stylesheet" href="${ctxStatic}/myhao/css/reset.min.css"/>
     <link type="text/css" rel="stylesheet" href="${ctxStatic}/myhao/css/index.css"/>
-    <script charset="UTF-8" type="text/javascript" src="${ctxStatic}/myhao/js/jquery1.7.2.js"></script>
+   	
     <script charset="UTF-8" type="text/javascript" src="${ctxStatic}/myhao/js/jquery.contextmenu.r2.js"></script>
     <script charset="UTF-8" type="text/javascript" src="${ctxStatic}/myhao/js/ajaxfileupload.js"></script>
-	<script charset="UTF-8" type="text/javascript" src="${ctxStatic}/myhao/js/jquery.form.js"></script>
- 	<style>
+	<style>
 		#box #food #file .defaultWindow div {
           padding: 250px 165px 10px 140px;
           width: 488px;
-          background: url(${ctxStatic}/myhao/images/start.png) no-repeat center center;
-}
+          background: url(${ctxStatic}/myhao/images/start.png) no-repeat center center;         
+		}
 	</style>
 	<script>
 	$(document).ready(function() {
+		
+		/*解决IE8下  console未定义*/
+		window.console = window.console || (function(){   
+		    var c = {}; c.log = c.warn = c.debug = c.info = c.error = c.time = c.dir = c.profile   
+		    = c.clear = c.exception = c.trace = c.assert = function(){};   
+		    return c;   
+		})();  
 		/*点击部门初始页消失  */
 		statrWin();
 		function statrWin(){
-			/*点击某个部门文件部分首页消失，部门文件显示*/
+			/*点击某个部门文件部分首页消失，部门文件显示*/	
 			 $(".subNav").click(function(){
 					var startVal=$(this).children().val();//获取部门下隐藏域的input的value值，确定点击的是哪个部门。
+					//校验是否用户所在部门，控制权限
+					var flag=false;
+					$.ajax({
+     	                url:'${ctx}/documentmenu/documentMenuInfo/brunchMenuValidate',
+     	                data:{
+     	                	officeId:startVal //机构的ID
+		                },
+		                success: function (data) {
+	     	            	  if(data.resultFlag=='failed'){
+						          //查看权限
+						          //shareFiles/newfolder屏蔽
+						          $("#shareFiles").hide();
+	     	            		  $("#newfolder").hide();
+				
+						      }else{
+						    	  flag=true;
+						    	  //管理权限
+						    	  //shareFiles/newfolder显示
+						    	  $("#shareFiles").show();
+	     	            		  $("#newfolder").show();
+						      }
+   	                	}
+                	 });
 					 $.ajax({
-			                url:'/jrjw/a/documentmenu/documentMenuInfo/brunchFile',
+			                url:'/jrjw/a/documentmenu/documentMenuInfo/brunchMenu',
 			                data:{
-			                	id:startVal
+			                	officeId:startVal
 			                },
-			                success:function(aa){
+			                success:function(menuList){
 			                	$("#brunchFiles").children().remove();//返回成功删除该文件窗口下的所有文件夹；
-								if(aa.limitedList && aa.limitedList.length>0){
-									for (var i = 0; i <aa.limitedList.length; i++) {
+			                	//右侧显示所属机构
+								if(menuList && menuList.length>0){
+									$("#departmentName").children('p').text(menuList[0].officeName);
+									for (var i = 0; i <menuList.length; i++) {
 										var div="<li class='db_folder'>"+
-											"<input type='hidden' value='"+aa.limitedList[i].id+"'/>"+
+											"<input type='hidden' value='"+menuList[i].id+"'/>"+
 				                            "<img src='${ctxStatic}/images/file.png' alt=''/>"+
-				                            "<p>"+aa.limitedList[i].name+"</p>"+
+				                            "<p>"+menuList[i].menuName+"</p>"+
 				                       "</li>";
 				                       $("#brunchFiles").append(div);//创建新的文件夹；
 									}
 									
 									/*单机文件夹背景色变化  */
 									$(".db_folder").each(function(){//循环每个文件夹
-								        $(this).toggle(function(){
-							                $(this).css("border-color","#008000");//点击文件夹该文件件夹边框颜色切换
-							            	console.log($(this).css("border-color"));    
-								        },
-							            function(){
-							                $(this).css("border-color","#fdfefe");}
-							        );
+ 										 	var browser=navigator.appName;
+							                var b_version=navigator.appVersion;
+							                var version=b_version.split(";");
+							                var trim_Version=version[1].replace(/[ ]/g,"");
+							                if(browser=="Microsoft Internet Explorer" && trim_Version=="MSIE8.0"){
+										        $(this).toggle(function(){
+									                $(this).css("border-color","#128DDD");//点击文件夹该文件件夹边框颜色切换   
+									                /* console.log($(this).css("border-color")); */
+										        },
+									            function(){
+									                $(this).css("border-color","#fdfefe");
+									                });
+							                }else{
+							                	$(this).toggle(function(){
+									                $(this).addClass('a')
+									                $(this).removeClass('b'); 
+										        },
+									            function(){
+									                $(this).removeClass('a');
+									                $(this).addClass('b')
+												});
+							                }
 									});
-									/*右键删除文件夹*/
-									$('.db_folder').contextMenu('myMenu2', {//文件夹右击事件
-		            					bindings: {
-		            						'delete_folder': function (t) {
-		            		                	var msg = "您真的确定要该文件夹吗？";
-		            		                	if(confirm(msg)==true){//点击确定执行里面的代码
-		            		                		console.log(startVal);//部门ID
-		            		                	var delete_folderId=$(t).children("input").val();
-		            		                		console.log(delete_folderId);//删除的文件夹ID
-
-		            			                	 $.ajax({
-		            			     	                url:'',
+									if(flag){
+										/*右键删除文件夹*/
+										$('.db_folder').contextMenu('myMenu1', {//文件夹右击事件
+			            					bindings: {
+			            						'delete_folder': function (t) {
+			            							var delete_folderId=$(t).children('input').first().val();
+			            							$.ajax({
+		            			     	                url:'${ctx}/documentmenu/documentMenuInfo/deleteMenuValidate',
 		            			     	                data:{
-		            			     	                	departmentId:startVal,
-		            			     	                	folderId:delete_folderId
+		            			     	                	menuId:delete_folderId//将要删除的文件夹ID
 		            			     	                },
-		            			     	               success: function (aa) {
-		            			  							alert("删除成功");
-		            			   	                    	window.location.reload();
-		            			   	                }
-		            			     			 }); 
-		            		                    }else{
-		            		                        return false;
-		            		                    }
-		            						}
-		           						 }
-									});
-								
+		            			     	                success: function (data) {
+		            			     	                	var submit = function (v, h, f) {
+		  		            		                          if (v == true){
+		  		            		                        	 //删除文件夹
+		 	            			     	            		 $.ajax({
+		 	     	            			     	                url:'${ctx}/documentmenu/documentMenuInfo/deleteMenu',
+		 	     	            			     	                data:{
+		 	     	            			     	                	menuId:delete_folderId//将要删除的文件夹ID
+		 	     	            			     	                },
+		 	     	            			     	                success: function (data) {
+		 		     	            			     	            	  if(data.resultFlag=='failed'){
+		 		     	            								        	$.jBox.info(data.resultDesc);
+		 		     	            								      }else{
+		 		     	            								    	  $(t).remove();
+		 		     	            								    	  //重新加载左侧树形--待调整
+		 		     	            								    	 // location='${ctx}/documentmenu/documentMenuInfo';
+		 		     	            								      }
+		 	     	            			   	                	}
+		 	     	            			                	 });  
+		  		            		                          }else if (v == false){
+		  		            		                        	  return true;//关闭
+		  		            		                          }
+		  		            		                          return true;//关闭
+		  		            		                      };
+		  		            		       				  $.jBox.confirm(data.resultDesc, "警告", submit,{ buttons: { '确认': true, '取消': false} });
+		            			   	                	}
+		            			                	});
+		            			                },
+			            						'rename': function (t) {
+			            							var flgText=$(t).children('p').text();
+			            							console.log(flgText);
+			            							$(t).children('p').text("");
+			            							var oInput = $("<input class='oInput'/>");
+			            							$(t).append(oInput);
+			            							$(oInput).focus();
+			            							$(oInput).blur(function(){
+			            								var value=$(this).val();
+			            								if(value!="" && value!=flgText){
+			            									var flgId=$(this).parent().children('input').first().val();
+			            									$(this).remove();
+	 		            									$.ajax({
+								        		                url:'/jrjw/a/documentmenu/documentMenuInfo/menuRename',
+								        		                data:{
+								        		                	"menuId":flgId,
+								        		                	"menuName":encodeURI(value)
+								        		                },
+								        		                success:function(data){
+								        		                	  if (data.resultFlag == "success"){
+							            								  $(t).children('p').text(value);
+							            									
+								        		                	  }
+								        		                }
+								                            });
+			            								}else if(value=="" || value==flgText){
+			            									$(t).children('p').text(flgText);
+			            									$(this).remove();
+			            								}
+			            							});
+			            						}
+			           						 }
+										});
+									}
 									/*双击文件夹，进入该文件内  */
+									/* var folderId=""; */
 									 $(".db_folder").children("img").each(function(index,item){//循环文件夹 图片
 										 $(this).dblclick(function(){//双击该文件夹图片
-											 var folderId = $(this).parent().children().first().val();//变量保存文件夹下的隐藏域的value（ID）值；
+											 var menuName=$(this).parent().children('p').text();
+											 $("#fileNames").children('p').text(menuName);
+											 folderId = $(this).parent().children().first().val();//变量保存文件夹下的隐藏域的value（ID）值；
 											 $.ajax({
 									                url:'/jrjw/a/documentmenu/documentMenuInfo/brunchFile',
 									                cache:false, 
 									                data:{
-									                	id:folderId
+									                	menuId:folderId
 									                },
-									                success :function(aa){
-									                	
-									                	if(aa.limitedList && aa.limitedList.length>0){
+									                success :function(fileList){
+									                	if(fileList && fileList.length>0){
 									                		$("#folder_win").css({"display": "none", "z-index": 0});
 									    		            $("#file_win").css({"display": "block", "z-index": 10});//具体文件窗口展示
+									    		            $("#search_win").css({"display": "none", "z-index": 0});
 										                	$(".top2_next_ul").css("display", "block");
 										                	$("#thirdLevel").children().remove();//具体文件窗口下的内容清空
-									                		for (var i = 0; i <aa.limitedList.length; i++) {
+									                		for (var i = 0; i <fileList.length; i++) {
 									                			var div="<li class='db_file'>"+
-									                			"<input type='hidden' value='"+aa.limitedList[i].id+"'/>"+
+									                			"<input type='hidden' value='"+fileList[i].id+"'/>"+
 								                            	"<img src='${ctxStatic}/images/dbfile.png' alt=''/>"+
-								                            	"<p>"+aa.limitedList[i].name+"</p>"+
+								                            	"<p>"+fileList[i].fileName+"</p>"+
 								                            	"</li>";
 								                            	$("#thirdLevel").append(div);//后台获取插入新的文件内容，插入到具体文件窗口
 									                		}
 									                		 /*右键删除文件  */
-									                		 yy();
-									                		function yy(){
-																console.log($('.db_file'))
-																$('.db_file').contextMenu('myMenu3', {
-									            					bindings: {
-									            						'delete_file': function (t) {//右键文件选择删除文件
-									            		                	var msg = "您真的确定要该文件吗？";
-									            		                	if(confirm(msg)==true){
-									            		                		var delete_fileId=$(t).children("input").val();
-									            		                		console.log(folderId);
-									            		                		console.log(delete_fileId);
+									                		 if(!flag){
+																	$('.db_file').contextMenu('myMenu3', {
+										            					bindings: {
+										            						'download':function (t) {//右键文件选择下载文件
+									            		                		var download_fileId=$(t).children("input").val();
+										            							var url = '/jrjw/a/documentmenu/documentMenuInfo/download';
+									            		                		var form = $("<form>");
+									            		                		form.attr("style","display:none");
+									            		                		form.attr("target","");
+									            		                		form.attr("method","post");
+									            		                		form.attr("action",url);
+									            		                		var input1 = $("<input>");
+									            		                		input1.attr("type","hidden");
+									            		                		input1.attr("name","fileId");
+									            		                		input1.attr("value",download_fileId);
+									            		                		$("body").append(form);
+									            		                		form.append(input1);
+									            		                		form.submit();
+									            		                		form.remove();
+									            		                		//若文件不存在或者下载失败，需处理返回值 
+									            		                		/*
 									            			                	$.ajax({
-									            			     	                url:'',
+									            			     	                url:'/jrjw/a/documentmenu/documentMenuInfo/download',
 									            			     	                data:{
-									            			     	                	id:folderId,//文件的父级文件夹ID
-									            			     	                	delete_fileId:delete_fileId//将要删除的文件ID
+									            			     	                	fileId:download_fileId
 									            			     	                },
-									            			     	               success: function (aa) {
-									            			   	                    	window.location.reload();
-									            			   	                }
-									            			     			 });
-									            		                    }else{
-									            		                        return false;
-									            		                    }
-									            						},
-									            						'download':function (t) {//右键文件选择下载文件
-									            							var msg = "您确定下载该文件吗？";
-									            		                	if(confirm(msg)==true){
-									            		                		var detele_fileName=$(t).children("p").text();
-									            		                		var filename=detele_fileName.replace(/.*(\/|\\)/, ""); 
-									            		                		var fileExt=(/[.]/.exec(filename)) ? /[^.]+$/.exec(filename.toLowerCase()) : '';
-									            		                		alert(fileExt);
-									            			                	$.ajax({
-									            			     	                url:'',
-									            			     	                data:{
-									            			     	                	detele_fileName:detele_fileName,//文件的名称
-									            			     	                	fileExt:fileExt//文件的名称
-									            			     	                },
-									            			     	               success: function (aa) {
-									            			   	                    	alert("下载成功")
-									            			   	                }
-									            			     			 });
-									            						}else{
-									            							return false;
-									            							}
-									            						}
-									           						 }
-																}); 
+									            			     	               success: function (data) {
+									            			     	            	  if(data.resultFlag=='failed'){
+									            								        	$.jBox.info(data.resultDesc);
+									            								      }
+									            			   	                   }
+									            			     			 	});
+									            		                		*/
+										            						}
+										           						 }
+																	}); 
+									                		 }else{
+									                			 yy(); 
 									                		 }
-								                        
+								                			 function yy(){
+																	$('.db_file').contextMenu('myMenu2', {
+										            					bindings: {
+										            							'delete_file': function (t) {//右键文件选择删除文件
+											            							var submit = function (v, h, f) {
+											            		                          if (v == true){
+											            		                        	  var delete_fileId=$(t).children("input").val();
+													            			                	$.ajax({
+													            			     	                url:'/jrjw/a/documentmenu/documentMenuInfo/deleteFile',
+													            			     	                data:{
+													            			     	                	fileId:delete_fileId//将要删除的文件ID
+													            			     	                },
+													            			     	               success: function (data) {
+													            			     	            	  if(data.resultFlag=='failed'){
+													            								        	$.jBox.info(data.resultDesc);
+													            								      }else{
+													            								    	  $(t).remove()
+													            								      }
+													            			   	                	}
+													            			                	});
+											            		                          }else if (v == false){
+											            		                        	  return true;//关闭
+											            		                          }
+											            		                          return true;//关闭
+											            		                      };
+											            		       				  $.jBox.confirm("确认删除该文件吗？", "警告", submit,{ buttons: { '确认': true, '取消': false} });
+											            						},
+										            						'download':function (t) {//右键文件选择下载文件
+									            		                		var download_fileId=$(t).children("input").val();
+										            							var url = '/jrjw/a/documentmenu/documentMenuInfo/download';
+									            		                		var form = $("<form>");
+									            		                		form.attr("style","display:none");
+									            		                		form.attr("target","");
+									            		                		form.attr("method","post");
+									            		                		form.attr("action",url);
+									            		                		var input1 = $("<input>");
+									            		                		input1.attr("type","hidden");
+									            		                		input1.attr("name","fileId");
+									            		                		input1.attr("value",download_fileId);
+									            		                		$("body").append(form);
+									            		                		form.append(input1);
+									            		                		form.submit();
+									            		                		form.remove();
+									            		                		//若文件不存在或者下载失败，需处理返回值 
+									            		                		/*
+									            			                	$.ajax({
+									            			     	                url:'/jrjw/a/documentmenu/documentMenuInfo/download',
+									            			     	                data:{
+									            			     	                	fileId:download_fileId
+									            			     	                },
+									            			     	               success: function (data) {
+									            			     	            	  if(data.resultFlag=='failed'){
+									            								        	$.jBox.info(data.resultDesc);
+									            								      }
+									            			   	                   }
+									            			     			 	});
+									            		                		*/
+										            						}
+										           						 }
+																	}); 
+										                		 }
 									                	}else{
 									                		$("#folder_win").css({"display": "none", "z-index": 0});
 									    		            $("#file_win").css({"display": "block", "z-index": 10});
+									    		            $("#search_win").css({"display": "none", "z-index": 0});
 										                	$(".top2_next_ul").css("display", "block");
+										                	$(".kk").css({"display": "none", "z-index": 0});
 										                	$("#thirdLevel").children().remove();
 									                	}
 									                }
 											 });
-											 
-											
-											 /*文件上传*/
-									         $("#add_files").click(function(){//点击表头上传按钮，跳转到上传界面；
-										         $(".defaultWindow").css({"display": "none", "z-index": 0});
-										         $("#folder_win").css({"display": "none", "z-index": 0});
-										         $("#file_win").css({"display": "none", "z-index": 0});
-										         $("#scWin").css({"display": "block", "z-index": 10});
-										         });
-										     $("#winBack").click(function(){//点击返回按钮，返回到具体文件页面；
-										         $(".defaultWindow").css({"display": "none", "z-index": 0});
-										         $("#folder_win").css({"display": "none", "z-index": 0});
-										         $("#file_win").css({"display": "block", "z-index": 10});
-										         $("#scWin").css({"display": "none", "z-index": 0});
-										         });
-										     
-											 $("#btnsubmit").click(function(){//点击确认上传按钮
-													var uploadForm=$("#uploadForm");
-												    uploadForm.children().first().val(folderId);//设置该文件所在文件夹的ID值保存到form表单的隐藏域的value值中；
-												    var tt=uploadForm.children().first().val();
-												    console.log(tt);
-												    $.ajaxFileUpload({
-												    	 url: "/jrjw/a/documentmenu/documentMenuInfo/upload?id="+tt,//用于文件上传的服务器端请求地址
-													     secureuri: false,//一般设置为false
-													     fileElementId :'fileId',//file控件的id
-													     dataType: 'json',
-													     complete:function(data){//只要完成即执行，最后执行
-													        },
-													     error: function() { alert('加载错误！！！'); },//服务器响应失败处理函数
-													     success: function(data) {//服务器成功响应处理函数
-													         if(data.resultFlag=='yes'){
-													        	//$.jBox.info("上传成功！");
-													        	alert("上传成功！");
-													         }else if(data.resultFlag=='no'){
-													        	//$.jBox.info("文件为空！");
-													        	alert("文件为空！");
-													         }else if(data.resultFlag=='no'){
-													        	//$.jBox.info("上传失败！");
-													        	alert("上传失败！");
-													         }
-													     }
-												    });
-												});
-											
 										 });
 									 });
 								}
@@ -218,608 +324,509 @@
 		            $(".defaultWindow").css({"display": "none", "z-index": 0});
 		            $("#folder_win").css({"display": "block", "z-index": 10});
 		            $("#file_win").css({"display": "none", "z-index": 0});
-		            $("#scWin").css({"display": "none", "z-index": 0});
-		            $("#sharewin").css({"display": "none", "z-index": 0});
+		            $("#search_win").css({"display": "none", "z-index": 0});
 		         });
 		};
+		/*文件上传*/
+		 /*点击X隐藏图层*/
+		 sc();
+		 function sc(){
+			 $("#close1").click(function(){
+				 console.log("11111")
+		         $("#modal1").css("display","none");
+		         $("#opcity1").css("display","none");
+		         $("#list_list2").html("");
+			 });
+        $("#add_files").click(function(){//点击表头上传按钮，跳转到上传界面；
+       	 console.log("ttttt")
+	         $("#modal1").css("display","block");
+	         $("#opcity1").css("display","block");
+	         var oDiv =$("#list_list2");
+	         var oForm =document.createElement("form");
+	         $(oForm).attr({
+	        	 "id":"uploadForm",
+	        	 "enctype":"multipart/form-data"
+	         });
+	         var input1=document.createElement("input");
+	         $(input1).attr({
+	                "type":"hidden",
+	                "name": "id"
+	         });
+	         var input2=document.createElement("input");
+	         $(input2).attr({
+	                "type":"file",
+	                "name": "file",
+	                "id":"fileId"
+	         });
+	         var input3=document.createElement("input");
+	         $(input3).attr({
+	                "type":"button",
+	                "value": "确认上传",
+	                "id":"btnsubmit"
+	         })
+	         $(oForm).append($(input1));
+	         $(oForm).append($(input2));
+	         $(oForm).append($(input3));
+	         $(oDiv).append($(oForm));
+			 $("#btnsubmit").click(function(){//点击确认上传按钮
+	        	 	var noNull=$("#fileId");
+	        	    noNull.val()!="";
+					var uploadForm=$("#uploadForm");
+				    uploadForm.children().first().val(folderId);//设置该文件所在文件夹的ID值保存到form表单的隐藏域的value值中；
+				    console.log( uploadForm.children().first().val())
+				    var tt=uploadForm.children().first().val();
+				    var noNull=$("#fileId");
+				    if(noNull.val()!=""&&noNull.val()!="未选择任何文件"){
+					    $.ajaxFileUpload({
+					    	 url: "/jrjw/a/documentmenu/documentMenuInfo/upload?menuId="+tt,//用于文件上传的服务器端请求地址
+						     secureuri: false,//一般设置为false
+						     fileElementId :'fileId',//file控件的id
+						     dataType: 'json',
+						     error: function() { alert('加载错误！'); },//服务器响应失败处理函数
+						     success: function(data) {//服务器成功响应处理函数
+						         if(data.resultFlag=='success'){
+						        	 $("#modal1").css("display","none");
+				        			 $("#opcity1").css("display","none");
+				        			 $("#list_list2").html("");
+				        			 $.ajax({
+							                url:'/jrjw/a/documentmenu/documentMenuInfo/brunchFile',
+							                cache:false, 
+							                data:{
+							                	menuId:tt
+							                },
+							                success :function(fileList){
+							                	if(fileList && fileList.length>0){
+							                		$("#folder_win").css({"display": "none", "z-index": 0});
+							    		            $("#file_win").css({"display": "block", "z-index": 10});//具体文件窗口展示
+								                	$(".top2_next_ul").css("display", "block");
+								                	$("#search_win").css({"display": "none", "z-index": 0});
+								                	$("#thirdLevel").children().remove();//具体文件窗口下的内容清空
+							                		for (var i = 0; i <fileList.length; i++) {
+							                			var div="<li class='db_file'>"+
+							                			"<input type='hidden' value='"+fileList[i].id+"'/>"+
+						                            	"<img src='${ctxStatic}/images/dbfile.png' alt=''/>"+
+						                            	"<p>"+fileList[i].fileName+"</p>"+
+						                            	"</li>";
+						                            	$("#thirdLevel").append(div);//后台获取插入新的文件内容，插入到具体文件窗口
+							                		}
+								                
+							                		 /*右键删除文件  */
+							                		 yy();
+							                		function yy(){
+														$('.db_file').contextMenu('myMenu2', {
+							            					bindings: {
+							            						'delete_file': function (t) {//右键文件选择删除文件
+							            							var submit = function (v, h, f) {
+							            		                          if (v == true){
+							            		                        	  var delete_fileId=$(t).children("input").val();
+									            			                	$.ajax({
+									            			     	                url:'/jrjw/a/documentmenu/documentMenuInfo/deleteFile',
+									            			     	                data:{
+									            			     	                	fileId:delete_fileId//将要删除的文件ID
+									            			     	                },
+									            			     	               success: function (data) {
+									            			     	            	  if(data.resultFlag=='failed'){
+									            								        	$.jBox.info(data.resultDesc);
+									            								      }else{
+									            								    	  $(t).remove()
+									            								      }
+									            			   	                	}
+									            			                	});
+							            		                          }else if (v == false){
+							            		                        	  return true;//关闭
+							            		                          }
+							            		                          return true;//关闭
+							            		                      };
+							            		       				  $.jBox.confirm("确认删除该文件吗？", "警告", submit,{ buttons: { '确认': true, '取消': false} });
+							            						},
+							            						'download':function (t) {//右键文件选择下载文件
+						            		                		var download_fileId=$(t).children("input").val();
+							            							var url = '/jrjw/a/documentmenu/documentMenuInfo/download';
+						            		                		var form = $("<form>");
+						            		                		form.attr("style","display:none");
+						            		                		form.attr("target","");
+						            		                		form.attr("method","post");
+						            		                		form.attr("action",url);
+						            		                		var input1 = $("<input>");
+						            		                		input1.attr("type","hidden");
+						            		                		input1.attr("name","fileId");
+						            		                		input1.attr("value",download_fileId);
+						            		                		$("body").append(form);
+						            		                		form.append(input1);
+						            		                		form.submit();
+						            		                		form.remove();
+						            		                		//若文件不存在或者下载失败，需处理返回值 
+						            		                		/*
+						            			                	$.ajax({
+						            			     	                url:'/jrjw/a/documentmenu/documentMenuInfo/download',
+						            			     	                data:{
+						            			     	                	fileId:download_fileId
+						            			     	                },
+						            			     	               success: function (data) {
+						            			     	            	  if(data.resultFlag=='failed'){
+						            								        	$.jBox.info(data.resultDesc);
+						            								      }
+						            			   	                   }
+						            			     			 	});
+						            		                		*/
+							            						}
+							           						 }
+														}); 
+							                		 }
+						                        
+							                	}else{
+							                		$("#folder_win").css({"display": "none", "z-index": 0});
+							    		            $("#file_win").css({"display": "block", "z-index": 10});
+								                	$(".top2_next_ul").css("display", "block");
+								                	$(".kk").css({"display": "none", "z-index": 0});
+								                	$("#search_win").css({"display": "none", "z-index": 0});
+								                	$("#thirdLevel").children().remove();
+							                	}
+							                }
+									 });
+						         }else{
+						        	 $.jBox.info(data.resultDesc);
+						        	 $("#modal1").css("display","none");
+							         $("#opcity1").css("display","none");
+							         $("#list_list2").html("");
+						         }
+						     }
+					    });
+				    }else{
+				    	$.jBox.info("上传文件不能为空！");
+				    	return	false;
+				    }
+				});
+        });
+		}
+		 
+		 
+		 	/*创建新文件夹*/
+		 	addNewFloder();
+		 	function addNewFloder(){
+		 		$("#newfolder").click(function(){
+		 			var brunchFiles=$("#brunchFiles");
+		 			var oFragmeng = document.createDocumentFragment();
+			 		var oli =document.createElement("li");
+			         $(oli).attr({
+			        	 "class":"db_folder"
+			         });
+			         var ValInput=document.createElement("input");
+			         $(ValInput).attr({
+			                "type":"hidden",
+			                "value": ""
+			         });
+			         var oImg=document.createElement("img");
+			         $(oImg).attr({
+			                "src":"${ctxStatic}/images/file.png"
+			         });
+			         var oP=document.createElement("p");
+			         var NameInput=document.createElement("input");
+			         $(NameInput).attr({
+			        	 "class":"oInput"
+			         });
+			         $(oli).append(ValInput);
+			         $(oli).append(oImg);
+			         $(oli).append(oP);
+			         $(oli).append(NameInput);
+			         $(oFragmeng).append(oli);
+			         $(brunchFiles).append(oFragmeng);
+			         $(NameInput).focus();
+					 $(NameInput).blur(function(){
+						 var value=$(this).val();
+							if(value!=""){
+								$.ajax({
+	        		                url:'/jrjw/a/documentmenu/documentMenuInfo/saveMenu',
+	        		                data:{
+	        		                	"menuName":encodeURI(value)
+	        		                },
+	        		                success:function(data){
+	        		                	  if (data.resultFlag == "success"){
+	           									$(NameInput).parent().children('p').text(value);
+	        		                		   	$(NameInput).remove();
+	        		                	  }else{
+	        		                		  $.jBox.info(data.resultDesc);
+	        		                	  }
+	        		                }
+	                            }); 
+							}else{
+								$(this).parent().remove();
+							} 
+					});
+		 		});
+		 	}
 		    /*文件夹分享  */
 		    fx();
 		    function fx(){
 		    	/*分享那个文件夹*/
 		    	var wjjId="";
-				 $("#new_folder").click(function(){
+				 $("#shareFiles").click(function(){
 			    	 $(".db_folder").each(function(){//判断文件夹点击选中，IE不识别rgb
- 						 if($(this).css("border-color")=="rgb(0, 128, 0)"||$(this).css("border-color")=="#008000"){
+ 						 if($(this).css("background-color")=="rgb(204, 235, 248)"||$(this).css("background-color")=="#ccebf8"||$(this).css("border-color")=="#128ddd"){
 							 wjjId+=$(this).children().first().val();//变量拼接该文件夹的ID值
 								 wjjId+=",";//拼接逗号
 						 }
 					 });
 					 if(wjjId!=""){//确认有文件夹被选中，变量的内容不为空
-						 console.log("1");
-						 $(".defaultWindow").css({"display": "none", "z-index": 0});
-				         $("#folder_win").css({"display": "none", "z-index": 0});
-				         $("#file_win").css({"display": "none", "z-index": 0});
-				         $("#scWin").css({"display": "none", "z-index": 0});
-				         $("#sharewin").css({"display": "block", "z-index": 10});//跳转到分享界面
+				         $("#modal").css("display","block");
+				         $("#opcity").css("display","block");
+				         //加载待分享机构
+				         function bindHTML(data){
+				        	 var str="";
+ 				        	 $.each(data,function(index,item){
+				        		 str+="<li>";
+				        		 	str+='<input type="hidden" value='+item.id+'>';
+				        		 	str+='<input type="checkbox" name="test" class="btnture il"/>';
+				        		 	str+='<p class="il">'+item.name+'</p>';
+				        		 str+="</li>";
+				        	 });
+				        	 var oDiv=$("#list_list1");
+				        	 oDiv.html(str);
+				         }
+				         $.ajax({
+	     	                url:'${ctx}/documentmenu/documentMenuInfo/loadWaitShareOfficeList',
+	     	                data:{
+			                	menuIds: wjjId.substring(0,wjjId.length-1)//文件夹的ID
+			                },
+	     	                success:bindHTML
+	                	 });
+						 $("#close").click(function(){
+					         $("#modal").css("display","none");
+					         $("#opcity").css("display","none");
+					         wjjId="";
+					         $("#list_list1").html("");
+						 });
 					 }else{
-						 alert("分享文件夹不能为空");
+						 $.jBox.info("分享文件夹不能为空！");
 					 }
 				 });
-				 /*确定分享给哪个部门  */
 				 $("#count").click(function(){
-					 console.log("2");
 					 var newwjjId=wjjId.substring(0,wjjId.length-1);//去掉变量的字符串最后一个逗号，并保存到新的变量中；
 					 var searchId="";
 					 $(".btnture").each(function(){
 						 if($(this).prop("checked")==true){//如果分享部门前复选框被选中；
-							 searchId+=$(this).prevAll("input").first().val();//获取该部门的下第一个隐藏域的ID值；
+							 searchId+=$(this).prevAll("input").first().val()/* .trim() IE8不支持删除字符串里所有空格*/;//获取该部门的下第一个隐藏域的ID值；
 							 searchId+=",";//给变量拼接逗号；
 						 }
 					 });
 					 var newsearchId=searchId.substring(0,searchId.length-1);//去除变量的最后一个逗号，并且保存到新的变量里；
-					 console.log(newwjjId);
-					 console.log(newsearchId);
+ 					 console.log(newwjjId)
+					 console.log(newsearchId)
 					 if(searchId!=""&&wjjId!=""){
 						 $.ajax({
-				                url:'/jrjw/a/documentmenu/documentMenuInfo/shareFiles',
+				                url:'/jrjw/a/documentmenu/documentMenuInfo/shareMenus',
 				                data:{
-				                	folderId:encodeURI(newwjjId),//文件夹的ID
-									departmentId:encodeURI(newsearchId)//传递部门的ID
+				                	menuIds:newwjjId,//文件夹的ID
+				                	officeIds:newsearchId//分享到的部门ID
 				                },
-				                success: function (returndata) {
-						 		     $(".defaultWindow").css({"display": "none", "z-index": 0});
-							         $("#folder_win").css({"display": "block", "z-index": 10});//分享成功之后返回到具体文件夹界面；
-							         $("#file_win").css({"display": "none", "z-index": 0});
-							         $("#scWin").css({"display": "none", "z-index": 0});
-							         $("#sharewin").css({"display": "none", "z-index": 0});
-							        wjjId="";//将变量清空
-				                	$(".folder_xz").each(function(){
-				                        $(this).attr('checked',false);
-				                	});
-				                	$(".btnture").each(function(){
-				                        $(this).attr('checked',false);
-				                	});
+				                success: function (data) {
+				                	 $.jBox.info(data.resultDesc);
+				                	 if(data.resultFlag=='success'){
+								         $("#modal").css("display","none");
+								         $("#opcity").css("display","none");
+								         wjjId="";
+								         $("#list_list1").html("");
+				                	 }else{
+								         $("#modal").css("display","none  ");
+								         $("#opcity").css("display","none");
+								         wjjId="";
+								         $("#list_list1").html("");
+				                	 }
+				                	 /*问题同时分享2个文件夹   返回失败  */
 						        }
 						 }); 
 					 }else{
-						 alert("分享部门不能为空");
+						 $.jBox.info("分享部门不能为空！");
 					 }
-					 })
-				 
-			     $("#chareBack").click(function(){
-				        wjjId="";
-	                	$(".folder_xz").each(function(){
-	                        $(this).attr('checked',false);
-	                	});
-	                	$(".btnture").each(function(){
-	                        $(this).attr('checked',false);
-	                	});
-			         $(".defaultWindow").css({"display": "none", "z-index": 0});
-			         $("#folder_win").css({"display": "block", "z-index": 10});
-			         $("#file_win").css({"display": "none", "z-index": 0});
-			         $("#scWin").css({"display": "none", "z-index": 0});
-			         $("#sharewin").css({"display": "none", "z-index": 0});
-			         });
-				 
-				 
-				 $(".subNav").each(function(index,tiem){
-					 var bmName=$(this).text();
-					 var oliId=$(this).children().first().val();
-					 var olis=document.createElement("li");
- 					 var oInputs=document.createElement("input");
-			         $(oInputs).attr({
-			                "type":"checkbox",
-			                "name": "test",
-			                "class":"btnture"
-			             });
-			         var oUl=$(".shareWindow_ul");
-			         var oInputId=document.createElement("input");
-			         $(oInputId).attr(
-			        	 "type","hidden"
-			         )
-			         $(oInputId).val(oliId);
-			         $(olis).append(oInputId);
-			         $(olis).append(oInputs);
-			         $(olis).append(bmName);
-			         oUl.append(olis);
-				 });
+				 })
 		    }
-		    
-		    
+		    /*列表图形切换*/
+		    $("#list1").click(function(){
+		    	$(this).css("display","none");
+		    	$("#list2").css("display","block");
+		    	$(".kk").css({"display": "block", "z-index": 10});
+		    	$("#folder_win").css({"display": "none", "z-index": 0});
+	            $("#file_win").css({"display": "none", "z-index": 0});
+	            $("#search_win").css({"display": "none", "z-index": 0});
+		    });
+		    $("#list2").click(function(){
+		    	$(this).css("display","none");
+		    	$("#list1").css("display","block");
+		    	$(".kk").css({"display": "none", "z-index": 0});
+		    	$("#folder_win").css({"display": "none", "z-index": 0});
+	            $("#file_win").css({"display": "block", "z-index": 10});
+	            $("#search_win").css({"display": "none", "z-index": 0});
+		    })
 		    /*所搜 功能 */
 		    searchInput();
 		    function searchInput(){
-		    	 var curSearch = $("#search_input");
-				    curSearch.focus(function () {
-				        if ($(this).val() != "") {
+		    		var curSearch = $("#search");
+		    	 	curSearch.click(function(){
+		    	 		 $(this).focus();
+		    	 		if ($(this).val()!= "") {
 				            $(this).val("");
 				        }
-				    });
-					
-/* 				    curSearch.blur(function(){
-				    	 $(this).val("文件搜索")
-				    }) */
-				    curSearch.keyup(function(e) {  
-				       if(e.keyCode  == 13 && $(this).val()!=""&&$(this).val()!="文件搜索") {  
-				    	   var valueSearch=$(this).val();
- 				    	   $.ajax({
-	        	                url:'/jrjw/a/documentmenu/documentMenuInfo/searchFiles',
-	        	                data:{
-									name:encodeURI(valueSearch)
-	        	                },
-	        	                success :function(aa){
-	        	                	curSearch.val("文件搜索");
-	        				         $(".defaultWindow").css({"display": "none", "z-index": 0});
-	        				         $("#folder_win").css({"display": "none", "z-index": 0});
-	        				         $("#file_win").css({"display": "block", "z-index": 10});
-	        				         $("#scWin").css({"display": "none", "z-index": 0});
-	        				         $("#sharewin").css({"display": "none", "z-index": 0});
-	        				         $("#thirdLevel").children().remove();
-	        				         alert("result="+aa.result);
-	 								if(aa.result && aa.result.length>0){
-	 									for (var i = 0; i <aa.result.length; i++) {
-				                			var div="<li class='db_file'>"+
-				                			"<input type='hidden' value='1'/>"+
-			                            	"<img src='${ctxStatic}/images/dbfile.png' alt=''/>"+
-			                            	"<p>"+aa.result[i].name+"</p>"+
-			                            	"</li>";
-			                            	$("#thirdLevel").append(div);
-				                		}
-	 									/*搜索成功之后对文件操作*/
-	 									$(".db_file").each(function(){
-											console.log($('.db_file').children("input").val())
-											$(this).contextMenu('myMenu3', {
-												bindings: {
-				            						'delete_file': function (t) {//右键文件选择删除文件
-				            		                	var msg = "您真的确定要该文件吗？";
-				            		                	if(confirm(msg)==true){
-				            		                		var delete_fileId=$(t).children("input").val();
-				            			                	$.ajax({
-				            			     	                url:'',
-				            			     	                data:{
-				            			     	                	delete_fileId:delete_fileId//将要删除的文件ID
-				            			     	                },
-				            			     	               success: function (aa) {
-				            			   	                    	/* window.location.reload(); */
-				            			   	                }
-				            			     			 });
-				            		                    }else{
-				            		                        return false;
-				            		                    }
-				            						},
+		    	 	 });
+		            $(document).bind("click",function(e){    
+		                if($(e.target).closest(".wrapper").length == 0){
+		                //点击wrapper之外就则触发
+		                  curSearch.val("文件搜索")
+		                }
+		             });
+		            $(".search_btn").click(function(){
+					       var valueSearch=$(this).parent().children('input').val();
+					       console.log(valueSearch);
+	 				    	   $.ajax({
+		        	                url:'/jrjw/a/documentmenu/documentMenuInfo/searchFiles',
+		        	                data:{
+										fileName:encodeURI(valueSearch)
+		        	                },
+		        	                success :function(data){
+		        	                	console.log(data);
+		        	                	/* if(data!=null){ */
+		  	        				     	 $(".defaultWindow").css({"display": "none", "z-index": 0});
+			        				         $("#folder_win").css({"display": "none", "z-index": 0});
+			        				         $("#file_win").css({"display": "none", "z-index": 0});
+			        				         $(".kk").css({"display": "none", "z-index": 0});
+			        				         $("#search_win").css({"display": "block", "z-index": 10});
+		        	                		var str="";
+			        	                	for(var key in data){
+			        	                		str+='<ul class="top4_next_ul" style="display:block;">';
+			        	                			str+='<p class="pStyle">'+key+'</p>';
+		 	        	                		$.each(data[key],function(index,item){
+			 	      				        		 str+='<li class="db_file">';
+			 					        		 		str+='<input type="hidden" value='+item.id+'>';
+			 					        		 		str+="<img src='${ctxStatic}/images/dbfile.png' alt=''/>";
+			 					        		 		str+='<p>'+item.fileName+'</p>';
+			 					        			 str+='</li>';
+				        	                	})
+				        	                	str+="</ul>";
+			        	                	}
+			        	                	var oDiv=$("#top4_next");
+			        	                	oDiv.html(str);
+			        	                	
+											$('.db_file').contextMenu('myMenu3', {
+				            					bindings: {
 				            						'download':function (t) {//右键文件选择下载文件
-				            							var msg = "您确定下载该文件吗？";
-				            		                	if(confirm(msg)==true){
-				            		                		var detele_fileName=$(t).children("p").text();
-				            		                		var filename=detele_fileName.replace(/.*(\/|\\)/, ""); 
-				            		                		var fileExt=(/[.]/.exec(filename)) ? /[^.]+$/.exec(filename.toLowerCase()) : '';
-				            		                		alert(fileExt);
-				            			                	$.ajax({
-				            			     	                url:'',
-				            			     	                data:{
-				            			     	                	detele_fileName:detele_fileName,//文件的名称
-				            			     	                	fileExt:fileExt//文件的名称
-				            			     	                },
-				            			     	               success: function (aa) {
-				            			   	                    	alert("下载成功")
-				            			   	                }
-				            			     			 });
-				            						}else{
-				            							return false;
-				            							}
+			            		                		var download_fileId=$(t).children("input").val();
+				            							var url = '/jrjw/a/documentmenu/documentMenuInfo/download';
+			            		                		var form = $("<form>");
+			            		                		form.attr("style","display:none");
+			            		                		form.attr("target","");
+			            		                		form.attr("method","post");
+			            		                		form.attr("action",url);
+			            		                		var input1 = $("<input>");
+			            		                		input1.attr("type","hidden");
+			            		                		input1.attr("name","fileId");
+			            		                		input1.attr("value",download_fileId);
+			            		                		$("body").append(form);
+			            		                		form.append(input1);
+			            		                		form.submit();
+			            		                		form.remove();
 				            						}
 				           						 }
 											}); 
-	 									})
-	 								}else{
-	 									alert("您所查找的文件不存在");
-	 								}
-	        				         
-	        	                },
-	        	                error:function(){
-	        	                	alert("系统内部出错，请联系管理员");
-	        	                }
-	                    	});
-				       }     
-				       });
-				    $("#seachEnter").click(function(){
-				    	if(curSearch.val()!=""&&curSearch.val()!="文件搜索"){
-				    		var valueSearch=curSearch.val();
-				    		console.log(valueSearch)
-				    		  $.ajax({
-		        	                url:'/jrjw/a/documentmenu/documentMenuInfo/searchFiles',
-		        	                data:{
-										name:encodeURI(valueSearch)		
-		        	                },
-		        	                success :function(aa){
-		        	                	$(curSearch).val("文件搜索");
-		        				         $(".defaultWindow").css({"display": "none", "z-index": 0});
-		        				         $("#folder_win").css({"display": "none", "z-index": 0});
-		        				         $("#file_win").css({"display": "block", "z-index": 0});
-		        				         $("#scWin").css({"display": "none", "z-index": 0});
-		        				         $("#sharewin").css({"display": "none", "z-index": 0});
-		        				         $("#thirdLevel").children().remove();
-		        				         alert("result="+aa.result);
-		 								if(aa.result && aa.result.length>0){
-		 									for (var i = 0; i <aa.result.length; i++) {
-					                			var div="<li class='db_file'>"+
-				                            	"<img src='${ctxStatic}/images/dbfile.png' alt=''/>"+
-				                            	"<p>"+aa.result[i].name+"</p>"+
-				                            	"</li>";
-				                            	$("#thirdLevel").append(div);
-					                		}
 
-		 								}else{
-		 									alert("您所查找的文件不存在");
-		 								}
+		        	                	/* }else{
+		        	                		return false;
+		        	                	} */
 		        	                },
 		        	                error:function(){
 		        	                	alert("系统内部出错，请联系管理员");
 		        	                }
-		                    	});
-					       }     
-					       });
-				    	}
-		    
-		    /* 添加部门 */
-		    addDepartment();
-			function addDepartment(){
-				$("#add_menu").click(function () {
-				    var isChrome = window.navigator.userAgent.indexOf("Chrome") !== -1;
-				    if (isChrome) {
-				        alert("是Chrome浏览器");
-				        var msg = "您真的确定修添加新部门吗？";
-		            	if(confirm(msg)==true){
-		            		 $("#add_input").css("display", "block");
-					            var bm_name = $("#bm_name");
-					            bm_name.val("输入名称");
-					            bm_name.focus();
-					            bm_name.click(function () {
-					                if ($(this).val() != "") {
-					                    $(this).val("");
-					                }
-					            });
-					            
-					            bm_name.blur(function () {
-						        	var value = $(this).val().replace(/(^\s*)|(\s*$)/g, "");
-						        	if(value!="" && value!="输入名称"){
-							        	alert("haha");
-							            $.ajax({
-							                url:'/jrjw/a/documentmenu/documentMenuInfo/save',
-							                data:{
-							                	"name":encodeURI(value),
-							                	"parentId":0,
-							                	"parentIds":null
-							                },
-							                success: function (aa) {
-							                		value=="输入名称"
-							                    	window.location.reload();
-							                }
-							            });	 	
-						        	}else if(value==""){
-						        		alert("新部门名称不能为空")
-						        		return false;
-						        	}
-						        });
-		            	}
-		            	else{
-		            		return false;
-		            	}
-				    } else {
-						var msg = "您真的确定修添加新部门吗？";
-		            	if(confirm(msg)==true){
-				            $("#add_input").css("display", "block");
-				            var bm_name = $("#bm_name");
-				            bm_name.val("输入名称");
-				            bm_name.focus();
-				            bm_name.click(function () {
-				                if ($(this).val() != "") {
-				                    $(this).val("");
-				                }
-				            });
-				            
-				            bm_name.blur(function () {
-					        	$("#add_input").css("display", "none");
-					        	var value = $(this).val().replace(/(^\s*)|(\s*$)/g, "");
-					        	if(value!="" && value!="输入名称"){
-						        	alert("haha");
-						            $.ajax({
-						                url:'/jrjw/a/documentmenu/documentMenuInfo/save',
-						                data:{
-						                	"name":encodeURI(value),
-						                	"parentId":0,
-						                	"parentIds":null
-						                },
-						                success: function (aa) {
-						                    	window.location.reload();
-						                }
-						            });	 	
-					        	}else{
-					        		return false;
-					        	}
-					        });
-		            	}else{
-		            		return false;
-		            	}
-				    }
-		        });
-			
-		    }
+		                    	});    
+		            })
+				    curSearch.keyup(function(e) {
+				       var valueSearch=$(this).val();
+				       if(e.keyCode==13&&$(this).val()!=""&&$(this).val()!="文件搜索") {
+ 				    	   $.ajax({
+	        	                url:'/jrjw/a/documentmenu/documentMenuInfo/searchFiles',
+	        	                data:{
+									fileName:encodeURI(valueSearch)
+	        	                },
+	        	                success :function(data){
+	        	                	console.log(data);
+	        	                	/* if(data!=null){ */
+	  	        				     	 $(".defaultWindow").css({"display": "none", "z-index": 0});
+		        				         $("#folder_win").css({"display": "none", "z-index": 0});
+		        				         $("#file_win").css({"display": "none", "z-index": 0});
+		        				         $(".kk").css({"display": "none", "z-index": 0});
+		        				         $("#search_win").css({"display": "block", "z-index": 10});
+	        	                		var str="";
+		        	                	for(var key in data){
+		        	                		str+='<ul class="top4_next_ul" style="display:block;">';
+		        	                			str+='<p class="pStyle">'+key+'</p>';
+	 	        	                		$.each(data[key],function(index,item){
+			        	                		
+	 	      				        		 str+='<li class="db_file">';
+	 					        		 		str+='<input type="hidden" value='+item.id+'>';
+	 					        		 		str+="<img src='${ctxStatic}/images/dbfile.png' alt=''/>";
+	 					        		 		str+='<p>'+item.fileName+'</p>';
+	 					        			 str+='</li>';
+			        	                	})
+			        	                	str+="</ul>";
+		        	                	}
+		        	                	var oDiv=$("#top4_next");
+		        	                	oDiv.html(str);
+		        	                	
+										$('.db_file').contextMenu('myMenu3', {
+			            					bindings: {
+			            						'download':function (t) {//右键文件选择下载文件
+		            		                		var download_fileId=$(t).children("input").val();
+			            							var url = '/jrjw/a/documentmenu/documentMenuInfo/download';
+		            		                		var form = $("<form>");
+		            		                		form.attr("style","display:none");
+		            		                		form.attr("target","");
+		            		                		form.attr("method","post");
+		            		                		form.attr("action",url);
+		            		                		var input1 = $("<input>");
+		            		                		input1.attr("type","hidden");
+		            		                		input1.attr("name","fileId");
+		            		                		input1.attr("value",download_fileId);
+		            		                		$("body").append(form);
+		            		                		form.append(input1);
+		            		                		form.submit();
+		            		                		form.remove();
+			            						}
+			           						 }
+										}); 
 
-	       
+	        	                	/* }else{
+	        	                		return false;
+	        	                	} */
+	        	                },
+	        	                error:function(){
+	        	                	$.jBox.info("系统内部出错，请联系管理员！");
+	        	                }
+	                    	});
+				       }else{
+				    	   return false;
+				       }     
+				       });
+			}
+
 	        /*树形下拉菜单  */
 	        treeMenu();
 	        function treeMenu(){
 		        $(".subNav").click(function () {
 		            $(this).toggleClass("currentDd").siblings(".subNav").removeClass("currentDd");
 		            $(this).toggleClass("currentDt").siblings(".subNav").removeClass("currentDt");
-
+		            $(".kk").css({"display": "none", "z-index": 0});
 		            // 修改数字控制速度， slideUp(500)控制卷起速度
 		            $(this).next(".navContent").slideToggle(500).siblings(".navContent").slideUp(500);
 		        })	
 	        }
-	        /*删除文件夹*/
-	        folderDelete();
-	        function folderDelete(){
-	        	$('.db_folder').contextMenu('myMenu2', {
-	        		bindings: {
-	        			'deleteFolder':function(t){
-	        				alert(1);
-	        			}
-	        		}
-	        	});
-	        }
-	        /*左侧树形右键*/
-	        treeRightC();
-	        function treeRightC(){
-	        	$('.subNav').contextMenu('myMenu1', {
-		            bindings: {
-		                'up': function (t) {
-		                	var msg = "您真的确定向上移动该部门吗？";
-		                	if(confirm(msg)==true){
-			                    if ($(t).prevAll("div").length != 0) {
-			                    	var theId= $(t).children().val();
-			                    	var prevId = $(t).prevAll("div").first().children().val();
-			                    	console.log(theId);
-			                    	console.log(prevId);
- 			                    	$.ajax({
-			        	                url:'/jrjw/a/documentmenu/documentMenuInfo',
-			        	                data:{
-			        	                	"id":encodeURI(theId),
-			        	                	"preId":encodeURI(prevId),
-			        	                	"upOrDown": "up"
-			        	                },
-			        	                success :function(){
-			        	                	window.location.reload();
-			        	                }
-			                    	}); 
-			                        
-			                    } else {
-			                        alert("已经是第一个部门了")
-			                    }
-		                	}else{
-		                		return false;
-		                	}
-		                },
-		                'down': function (t) {
-		                	var msg = "您真的确定向下移动该部门吗？";
-		                	if(confirm(msg)==true){
-		                		if ($(t).nextAll("div").length != 0) {
-			                    	var theId= $(t).children().val();
-			                    	var nextId = $(t).nextAll("div").first().children().val();
-			                    	console.log(theId);
-			                    	console.log(nextId);
-	 			                    	$.ajax({
-			        	                url:'/jrjw/a/documentmenu/documentMenuInfo',
-			        	                data:{
-			        	                	"id":encodeURI(theId),
-			        	                	"preId":encodeURI(nextId),
-			        	                	"upOrDown":"down"
-			        	               	},
-			        	               	success :function(){
-			        	                	window.location.reload();
-			        	                }
-			                    	});
-			                       
-			                    } else {
-			                        alert("已经是最后一个部门了")
-			                    }
-		                	}else{
-		                		return false;
-		                	}
-		                },
-		                'rename': function (t) {
-						    var isChrome = window.navigator.userAgent.indexOf("Chrome") !== -1;
-						    if (isChrome) {
-						    	alert("谷歌浏览器");
-			                	var msg = "您真的确定修改该部门名称吗？";
-			                	if(confirm(msg)==true){
-				                	var flgText =$(t).text();
-									var flg=$(t).children();
-									var flgVal=flg.val();
-									console.log(flgText)
-									console.log(flgVal)
- 				                    	$(t).text("");
-										console.log($(t).text())
-				                        var oInput = $("<input class='oInput'/>");
-				                        $(oInput).appendTo($(t));
-				                        oInput.css("display","block");
-				                       /*  oInput.attr("value","输入名称"); */
- 				                        oInput.click(function(){
- 						/*                     if ($(this).val() != "") {
- 						                            $(this).val("");
- 						                       } */
- 				                        	oInput.focus();
-				                        }) 
-				                        oInput.blur(function(){
-				                        	if($(this).val()==""||$(this).val()==flgText){
-				                        		console.log("ok")
-				                        		$(t).append(flg);
-				                        		$(t).append(flgText);
-				                        		$(this).remove();
-				                        	}else{
-					                            var value =$(this).val();
-					                            $(this).remove();
-					                            $.ajax({
-					        		                url:'/jrjw/a/documentmenu/documentMenuInfo/rename',
-					        		                data:{
-					        		                	"name":encodeURI(value),
-					        		                	"id":encodeURI(flgVal)
-					        		                },
-					        		                success:function(aa){
-					        		                	  if (aa.result && aa.result == "yes"){
-					        		                		  $(t).append(flg);
-									                          $(t).append(value);
-					        		                	  }
-					        		                }
-					                            });
-				                        	}
-				                        });
-			                	}else{
-			                		return false;
-			                	}
-						    }else{
-			                	var msg = "您真的确定修改该部门名称吗？";
-			                	if(confirm(msg)==true){
-				                	var flgText =$(t).text();
-									var flg=$(t).children();
-									var flgVal=flg.val();
-				                        $(t).text("");
-				                        var oInput = $("<input class='oInput'/>");
-				                        $(oInput).appendTo($(t));
-				                        oInput.css("display","block");
-				                        oInput.focus();
-				                        oInput.blur(function(){
-				                        	if($(this).val()==""||$(this).val()==flgText){
-				                        		alert("修改名称不能为空")
-				                        		$(t).append(flg);
-				                        		$(t).append(flgText);
-				                        		$(this).remove();
-				                        	}else{
-					                            var value =$(this).val();
-					                            $(this).remove();
-					                            $.ajax({
-					        		                url:'/jrjw/a/documentmenu/documentMenuInfo/rename',
-					        		                data:{
-					        		                	"name":encodeURI(value),
-					        		                	"id":encodeURI(flgVal)
-					        		                },
-					        		                success:function(aa){
-					        		                	  if (aa.result && aa.result == "yes"){
-					        		                		  $(t).append(flg);
-									                          $(t).append(value);
-					        		                	  }
-					        		                }
-					                            });
-				                        	}
-				                        }); 
-			                	}else{
-			                		 return false;
-			                	}
-						    }
-		                },
-		                'delete': function (t) {
-		                	var msg = "您真的确定要该部门吗？";
-		                	if(confirm(msg)==true){
-			                	var deleteVal=$(t).children().val();
-			                	console.log(deleteVal);
-			                	 $.ajax({
-			     	                url:'/jrjw/a/documentmenu/documentMenuInfo/delete',
-			     	                data:{
-			     	                	id:deleteVal
-			     	                },
-			     	               success: function (aa) {
-			   	                    	window.location.reload();
-			   	                }
-			     			 });
-		                    }else{
-		                        return false;
-		                    }
-		                },
-		                'add_file': function (t) {
-		                	 var isChrome = window.navigator.userAgent.indexOf("Chrome") !== -1;
-							    if (isChrome) {
-							    	alert("谷歌浏览器");
-				                	var msg = "您确定新建文件夹吗？";
-				                	if(confirm(msg)==true){
-					                    var obj = $("<input value='新建文件夹' class='newName'>");
-					                    obj.insertAfter($(t));
-					                    obj.click(function () {
-					                    	obj.focus();
-					                        if ($(this).val() != "") {
-					                            $(this).val("");
-					                        }
-					                    });
-					                    obj.blur(function () {
-					                    	if(obj.val()!=""&&obj.val()!="新建文件夹"){
-						                        obj.css("display", "none");
-						                        var value = $(this).val();
-						                        var parentId=$(t).children().val();
-						        	             $.ajax({
-						        	                url:'/jrjw/a/documentmenu/documentMenuInfo/save',
-						        	                data:{
-						        	                	"name":encodeURI(value),
-						        	                	"parentId":encodeURI(parentId),
-						        	                	"parentIds":null
-						        	                },
-					 	        	                 success: function (aa) {
-					 	        	                	window.location.reload();
-						        	                } 
-						        	            });   
-					                    	}else{
-					                    		obj.css("display", "none");
-					                    	} 
-					                    });
-				                	}else{
-				                		return false;
-				                	}
-							    }else{
-				                	var msg = "您确定新建文件夹吗？";
-				                	if(confirm(msg)==true){
-					                    var obj = $("<input value='新建文件夹' class='newName'>");
-					                    obj.insertAfter($(t));
-					                    obj.focus();
-					                    obj.click(function () {
-					                        if ($(this).val() != "") {
-					                            $(this).val("");
-					                        }
-					                    });
-					                    obj.blur(function () {
-					                    	if(obj.val()!=""&&obj.val()!="新建文件夹"){
-						                        obj.css("display", "none");
-						                        var value = $(this).val();
-						                        var parentId=$(t).children().val();
-						        	             $.ajax({
-						        	                url:'/jrjw/a/documentmenu/documentMenuInfo/save',
-						        	                data:{
-						        	                	"name":encodeURI(value),
-						        	                	"parentId":encodeURI(parentId),
-						        	                	"parentIds":null
-						        	                },
-					 	        	                 success: function (aa) {
-					 	        	                	window.location.reload();
-						        	                } 
-						        	            });   
-					                    	}else{
-					                    		obj.css("display", "none");
-					                    	} 
-					                    });
-				                	}else{
-				                		return false;
-				                	}
-							    }
-		                }
-		            }
-		        });
-	        }
 	        
-        
         	/*点击返回  */
         	clickBack();
         	function clickBack(){
                 $("#back").click(function () {
+
+                	$("#modal1").css("display","none");
+			        $("#opcity1").css("display","none");
                     $("#folder_win").css({"display": "block", "z-index": 10});
                     $("#file_win").css({"display": "none", "z-index": 0});
+                    $("#search_win").css({"display": "none", "z-index": 0});
                     $(".db_folder").each(function(index,item){
                     	$(item).css("border-color","#fdfefe");
                     })
@@ -832,62 +839,44 @@
 <div id="box">
     <div id="head">
         <div id="head_xia">
-            <ul>
-                <li class="top2">
-                                                        文件搜索：
-                <input type="text" value="文件搜索" id="search_input"/>
-                <img src="${ctxStatic}/myhao/images/search.png" id="seachEnter"/>
-                </li>
-            </ul>
+            <div class="nav" id="list1">
+                <img src="${ctxStatic}/myhao/images/graphical.png" alt=""/>
+            </div>
+            <div class="nav" id="list2">
+                <img src="${ctxStatic}/myhao/images/list.png" alt=""/>
+            </div>
+            <div id="search_box" class="nav">
+                <div class="wrapper">
+                    <input type="text" id="search" value="文件搜索" />
+                    <button class="search_btn"><img src="${ctxStatic}/myhao/images/search_icon.png"/></button>
+                </div>
+            </div>
         </div>
     </div>
     <div id="food">
         <div id="tree" class="food_child">
-            <div class="add_menu">
-                <!--添加部门按钮-->
-                <p id="add_menu">+添加部门</p>
-            </div>
-
-            <!--左侧树形-->
+			<div id="officeName"><p>处室部门列表</p></div>
             <div class="subNavBox">
-            	<c:forEach items="${totalList}" var="map">
-            	<c:forEach items="${map}" var="entry" varStatus="vs">
-                <div class="subNav" id="cw"><input type="hidden" value="${entry.key.id} " id="department_name"/>${entry.key.name}</div>
-                <ul class="navContent " id="cw_ul">
-                	<c:forEach items="${entry.value}" var="menu">
-                    <li><a href="#"><input type="hidden" value="${menu.id}" id="file_name" class="file_name"/>${menu.name}</a></li>
-                    </c:forEach>	
-                </ul>
-                </c:forEach>
-                </c:forEach>
+            	<c:forEach items="${officeList }" var="office">
+            		<div class="subNav" id="cw"><input type="hidden" value="${office.id} " id="department_name"/>${office.name}</div>
+                 </c:forEach>
             </div>
 
-            <!--树形添加部门-->
-            <div id="add_input">
-                <ul>
-                    <li>
-                        <input type="text" value="输入名称" id="bm_name"/>
-                    </li>
-                </ul>
-            </div>
             <!--树形右击菜单-->
             <div class="contextMenu" id="myMenu1">
                 <ul>
-                    <li id="delete"><img src="${ctxStatic}/myhao/images/cross.png"/>删除部门</li>
-                    <li id="up"><img src="${ctxStatic}/myhao/images/up.png"/>上移</li>
-                    <li id="down"><img src="${ctxStatic}/myhao/images/down.png"/>下移</li>
-                    <li id="rename"><img src="${ctxStatic}/myhao/images/rename.png"/>重命名</li>
-                    <li id="add_file"><img src="${ctxStatic}/myhao/images/New_File.png"/>新建文件夹</li>
+                	<li id="rename"><img src="${ctxStatic}/myhao/images/rename.png"/>重命名</li>
+                    <li id="delete_folder"><img src="${ctxStatic}/myhao/images/delete_folde.png"/>删除文件夹</li>
                 </ul>
             </div>
             <div class="contextMenu" id="myMenu2">
                 <ul>
-                    <li id="delete_folder"><img src="${ctxStatic}/myhao/images/delete_folde.png"/>删除文件夹</li>
+                    <li id="delete_file"><img src="${ctxStatic}/myhao/images/delete_file.png"/>删除文件</li>
+                    <li id="download"><img src="${ctxStatic}/myhao/images/upload_file.png"/>下载文件</li>
                 </ul>
             </div>
             <div class="contextMenu" id="myMenu3">
                 <ul>
-                    <li id="delete_file"><img src="${ctxStatic}/myhao/images/delete_file.png"/>删除文件</li>
                     <li id="download"><img src="${ctxStatic}/myhao/images/upload_file.png"/>下载文件</li>
                 </ul>
             </div>
@@ -897,27 +886,79 @@
         
         	<div class="defaultWindow">
                 <div></div>
-                <span>请选择您所在的部门,如部门不存在请点击"添加部门"</span>
+                <span class="ss">请选择您所在的部门</span>
+            </div>
+            <!--列表窗口-->
+              <div class="kk">
+                <div class="t">
+                    <ul>
+                        <li class="tLi1">文件名</li>
+                        <li class="tLi2">文件大小</li>
+                        <li class="tLi3">修改日期</li>
+                    </ul>
+                </div>
+                <div class="l">
+                    <div class="l1 ll">
+                        <div class="lName">
+                            <a href="javascript:void(0)">
+                                <img src="${ctxStatic}/myhao/images/filet.png" alt=""/>
+                            </a>
+                            <a href="javascript:void(0)">独孤九剑</a>
+                        </div>
+                        <div class="lbs">1M</div>
+                        <div class="lTime">2013.05.08</div>
+                    </div>
+                    <div class="l2 ll">
+                        <div class="lName">
+                            <a href="javascript:void(0)">
+                                <img src="${ctxStatic}/myhao/images/filet.png" alt=""/>
+                            </a>
+                            <a href="javascript:void(0)">独孤九剑</a>
+                        </div>
+                        <div class="lbs">198M</div>
+                        <div class="lTime">2013.05.08</div>
+                    </div>
+                    <div class="l3 ll">
+                        <div class="lName">
+                            <a href="javascript:void(0)">
+                                <img src="${ctxStatic}/myhao/images/filet.png" alt=""/>
+                            </a>
+                            <a href="javascript:void(0)">独孤九剑</a>
+                        </div>
+                        <div class="lbs">566K</div>
+                        <div class="lTime">2013.05.08</div>
+                    </div>
+                </div>
             </div>
             <!--文件夹窗口-->
             <div id="folder_win">
                 <div class="top3">
                     <ul class="top3_ul">
                         <li>
-                            <a href="javascript:void(0)" id="new_folder">
-                                <img src="${ctxStatic}/myhao/images/share.png" alt=""/>
-                                分享
+                            <a href="javascript:void(0)" id="shareFiles">
+                                <img src="${ctxStatic}/myhao/images/share.png" alt=""/>分享
+                            </a>
+                            <a href="javascript:void(0)" id="newfolder">
+                                <img src="${ctxStatic}/myhao/images/New_File.png" alt=""/>新建文件夹
                             </a>
                         </li>
                     </ul>
                 </div>
+                <div id="departmentName"><p></p></div>
                 <div id="top3_next">
-                    <ul class="top3_next_ul" id="brunchFiles">
-                        
-                    </ul>
+                    <ul class="top3_next_ul" id="brunchFiles"></ul>
                 </div>
+                
+            <!--文件分享遮罩层-->    
+			<div id="modal">
+			    <h3>分享文件夹</h3>
+			    <span id=close>×</span>
+				<div><button id="count">确认分享</button></div>
+				<div id="list_list1"></div>
+			</div>
+			<div id="opcity"></div>
             </div>
-
+            
             <!--文件窗口-->
             <div id="file_win">
                 <!--表头-->
@@ -925,18 +966,17 @@
                     <ul class="top2_ul">
                         <li>
                             <a href="javascript:void(0)" id="back">
-                                <img src="${ctxStatic}/images/fanhui.png" alt=""/>
-                                返回
+                                <img src="${ctxStatic}/myhao/images/keyboard.png" alt=""/>返回
                             </a>
                         </li>
                         <li>
                             <a href="javascript:void(0)" id="add_files">
-                                <img src="${ctxStatic}/images/file_upload.png" alt=""/>
-                                上传
+                                <img src="${ctxStatic}/images/file_upload.png" alt=""/>上传
                             </a>
                         </li>
                     </ul>
                 </div>
+                <div id="fileNames"><p></p></div>
                 <!--内容部门-->
                 <div id="top2_next">
                     <ul class="top2_next_ul" id="thirdLevel">
@@ -944,48 +984,21 @@
                 </div>
             </div>
             
-            <!--上传窗口  -->
-            <div id="scWin">
-                    <div class="top4">
-                        <ul class="top4_ul">
-                            <li>
-                                <a href="javascript:void(0)" id="winBack">
-                                    <img src="${ctxStatic}/images/fanhui.png" alt=""/>
-                                    返回
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                <div id="formWindow">
-                        <form id= "uploadForm" enctype="multipart/form-data">  
-				          <input type="hidden" name="id"/>  
-				                                  上传文件： <input type="file" name="file" id="fileId"/><br/>  
-				          <input type="button" value="上传" id="btnsubmit"/>  
-    					</form>  
+            <div id="search_win">
+                <!--表头-->
+                <!--内容部门-->
+                <div id="top4_next">
+                	
                 </div>
             </div>
-            <!--分享窗口  -->
-             <div id="sharewin">
-                    <div class="top5">
-                        <ul class="top5_ul">
-                            <li>
-                                <a href="javascript:void(0)" id="chareBack">
-                                    <img src="${ctxStatic}/images/fanhui.png" alt=""/>
-                                    返回
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                	<div id="shareWindow">
-                		 <ul class="shareWindow_ul"></ul>
-                		<input type="button" value="选择分享" id="count"/>
-                	</div>
-            </div>
-            <div class="contextMenu" id="myMenu2">
-                <ul>
-                    <li id="deleteFolder"><img src="${ctxStatic}/myhao/images/cross.png"/>删除文件夹</li>
-                </ul>
-            </div>
+            <!--上传窗口  -->
+            <!--文件上传遮罩层-->    
+			<div id="modal1">
+			    <h3>文件上传</h3>
+			    <span id=close1>×</span>
+				<div id="list_list2"></div>
+			</div>
+			<div id="opcity1"></div>
         </div>
     </div>
 </div>

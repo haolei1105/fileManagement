@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.capinfo.jrjjg.modules.documentmenu.dao.DocumentMenuInfoDao">
+    
+	<sql id="documentMenuInfoColumns">
+		a.id AS "id",
+		a.menu_name AS "menuName",
+		a.office_id AS "officeId",
+		a.ranking_no AS "rankingNo"
+		a.del_flag AS "delFlag",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate"
+	</sql>
+	<!-- 新建文件夹 -->
+	<insert id="saveMenu">
+		INSERT INTO document_menu_info1(
+			id,
+			menu_name,
+			office_id,
+			ranking_no,
+			del_flag,
+			create_by,
+			create_date,
+			update_by,
+			update_date
+		) VALUES (
+			#{id},
+			#{menuName},
+			#{officeId},
+			#{rankingNo},
+			#{delFlag},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate}
+		)
+	</insert>
+	<!-- 文件夹重命名 -->
+	<update id="menuRename">
+		UPDATE document_menu_info1 SET 	
+			menu_name = #{menuName}
+		WHERE id = #{menuId}
+	</update>
+	<!-- 删除文件夹 -->
+	<update id="deleteMenu">
+		UPDATE document_menu_info1 SET 
+			del_flag = '1'
+		WHERE id = #{menuId}
+	</update>
+	<!-- 通过文件夹id，批量删除文件 -->
+	<update id="delAllFilesByMenuId">
+		UPDATE document_file_info SET 
+			del_flag = '1'
+		WHERE menu_id = #{menuId}
+	</update>
+	<!-- 单独删除文件 -->
+	<update id="deleteFile">
+		UPDATE document_file_info SET 
+			del_flag = '1'
+		WHERE id = #{fileId}
+	</update>
+	<!-- 通过id获取文件夹对象 -->
+	<select id="getMenuInfo" resultType="DocumentMenuInfo">
+		select * from document_menu_info1 where id = #{id} and del_flag='0'
+	</select>
+	<!-- 上传文件 -->
+	<insert id="saveFileInfo">
+		INSERT INTO document_file_info(
+			id,
+			file_name,
+			menu_id,
+			del_flag,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			store_file_name
+		) VALUES (
+			#{id},
+			#{fileName},
+			#{menuId},
+			#{delFlag},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{storeFileName}
+		)
+	</insert>
+	<!-- 加载左侧树形 -->
+	<select id="loadOfficeList" resultType="Office">
+		select o.id,o.name
+		from sys_office o
+		left join document_menu_info1 m on o.id=m.office_id
+		left join document_menu_office mo on m.id=mo.menu_id
+		where (o.del_flag='0'
+			  and o.type='B'
+			  and o.id=#{officeId}
+			  )
+			  or (
+				  m.del_flag='0'
+				  and mo.office_id=#{officeId}
+			  )
+		group by o.id,o.name
+		order by nlssort(o.name, 'NLS_SORT=SCHINESE_PINYIN_M')
+	</select>
+	<!-- 获取该机构下所有文件夹数量 -->
+	<select id="loadRankingNo" resultType="java.lang.Integer">
+		select count(1)
+		from document_menu_info1 m
+		where m.del_flag='0'
+			and m.office_id=#{officeId}
+	</select>
+	<!-- 展开所在机构的所有文件夹 -->
+	<select id="brunchMenuList" resultType="DocumentMenuInfo">
+		select m.id,m.menu_name,o.name as officeName
+		from document_menu_info1 m
+		left join sys_office o on m.office_id=o.id
+		where o.del_flag='0'
+		  and m.del_flag='0'
+		  and m.office_id = #{officeId} 
+	</select>
+	<!-- 展开拥有权限的某机构中所有文件夹 -->
+	<select id="brunchOtherMenuList" resultType="DocumentMenuInfo">
+		select m.id,m.menu_name,o.name as officeName
+		from sys_office o
+		left join document_menu_info1 m on o.id=m.office_id
+		left join document_menu_office mo on m.id=mo.menu_id
+		where o.del_flag='0'
+		  and m.del_flag='0'
+		  and o.id=#{officeId} 
+		  and mo.office_id = #{ownerOfficeId} 
+	</select>
+	<!-- 展开文件夹中所有文件 -->
+	<select id="brunchFileList" resultType="DocumentFileInfo">
+		select f.id,f.file_name,m.menu_name,o.name as officeName
+		from document_file_info f
+		left join document_menu_info1 m on f.menu_id=m.id
+		left join sys_office o on m.office_id=o.id
+		where f.del_flag='0'
+			  and m.del_flag='0'
+			  and o.del_flag='0'
+			  and menu_id = #{memuId}
+	</select>
+	<!-- 通过文件id获取文件对象 -->
+	<select id="getFileById" resultType="DocumentFileInfo">
+		select m.office_id,f.menu_id,f.id,f.file_name,f.store_file_name
+		from document_menu_info1 m
+		left join document_file_info f
+		on m.id=f.menu_id
+		where  m.del_flag='0'
+			and f.del_flag='0'
+			and f.id = #{fileId}
+	</select>
+	<!-- 加载可供分享的机构列表，排除自身机构-同时分享多个文件夹 -->
+	<select id="loadWaitShareOfficeList" resultType="Office">
+		select o.id,o.name
+		from sys_office o
+		where o.del_flag='0'
+			  and o.type='B'
+			  and o.id != #{officeId}
+	</select>
+	<!-- 加载可供分享的机构列表，排除自身机构-单独分享一个文件夹 -->
+	<select id="loadWaitShareOfficesByMenuId" resultType="Office">
+		select o.id,o.name
+		from sys_office o
+		where o.del_flag='0'
+		    and o.type='B'
+		    and o.id != #{officeId}
+		    and o.id not in(
+		        select mo.office_id
+		        from document_menu_office mo
+		        where mo.menu_id=#{menuId}
+		    )
+		group by o.id,o.name
+	</select>
+	<!-- 通过menuId获取已分享的机构列表 -->
+	<select id="findSharedOfficeList" resultType="java.lang.String">
+		select mo.office_id as officeId
+		from document_menu_office mo
+		where  mo.menu_id = #{menuId}
+	</select>
+	<!-- 文件夹共享，插入文件夹和机构关联表数据 -->
+	<insert id="insertMenuOffice" parameterType="java.util.List">
+	begin
+	<foreach collection="list" item="item" index="index" separator=";" > 
+		INSERT INTO document_menu_office(
+			menu_id,
+			office_id
+		) VALUES (
+			#{item.id},
+			#{item.officeId}
+		)
+		</foreach> 
+	;end;
+	</insert>
+	<!-- 文件搜索 -->
+	<select id="searchFiles" resultType="DocumentFileInfo">
+		select o.name||'.'||m.menu_name as keyName,f.id,f.file_name,f.create_date
+		from document_file_info f
+		left join document_menu_info1 m on f.menu_id=m.id
+		left join sys_office o on m.office_id=o.id
+		where f.del_flag='0'
+			  and m.del_flag='0'
+			  and o.del_flag='0'
+			  and f.file_name like '%'||#{fileName}||'%'
+		order by o.name,m.menu_name
+	</select>
+	
+	<update id="changeNoOne">
+		update document_menu_info set ranking_no = #{rankingNo} where id = #{id} ; 
+	</update>
+	<update id="changeNoTwo">
+		update document_menu_info set ranking_no = #{rankingNo} where id = #{id} ; 
+	</update>
+</mapper>
